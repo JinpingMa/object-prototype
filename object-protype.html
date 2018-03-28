@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        // 'use strict'
+        //第一部分 对象创建
+        //1.早期开发人员创建一个对象的方法，创建一个Object的实例
+        document.write('<h3>第一部分对象创建：</h3>');
+        document.write('<h4>1.使用Object()创建一个对象实例</h4>');
+        let person1 = new Object();
+        person1.name = 'Hyper';
+        person1.age = 29;
+        person1.job = 'Software Engineer';
+        //delete person1.name;
+        person1.sayName = function() {
+            document.write('person1 name: ' + this.name + '<br />');
+        };
+        person1.sayName();
+        //2.几年后，对象字面量成为创建这种对象的首选模式
+        document.write('<h4>2.对象字面量创建对象</h4>');
+        let person2 = {
+            name: 'Hyper',
+            age: 29,
+            job: 'Software Engineer',
+
+            sayName: function() {
+                document.write('person2 name: ' + this.name + '<br />');
+            }
+        };
+        person2.sayName();
+        //3.属性的特性
+        /*ECMA-262第五版定义了只有内部才用的特性（attribute）用来描述属性（property）的各种特征,
+        *这些特性是为了实现JavaScript引擎用的，因此在JavaScript中不能直接访问他它们。
+        */
+        /* 1).数据属性：Configurable：表示能否通过delete删除属性从而重新定义属性，能否修改属性的特性，或者能否把属性改为访问器属性。默认值是true
+         * Enumerable：表示能否通过for-in循环返回属性。默认值为true
+         * Value: 包含这个属性的数值，读取属性值时从这里读取，默认是undefined
+         * writable： 表示能否修改属性的值，默认值为true
+         * 要修改属性默认的特性，必须通过Object.defineProperty()方法。方法接收三个参数：属性所在对象，属性的名字，一个描述符对象。描述符对象的属性值必须是：configuration、enumerable、writable、value
+         * 只能使用一次，频繁使用报错
+        */
+        document.write('<h4>3.属性的特征</h4>');
+        let person3 = {
+            name: 'Hyper'
+        };
+        Object.defineProperty(person3,"name",{
+            writable: true,
+            value: 'Hyper',
+            configurable: false,
+        });
+        
+        document.write('person3 name1 ' + person3.name + '<br />');
+        //writable设置为false时赋值不起作用，严格模式('use strict')会报错
+        // person3.name = 'ellicpse';
+        document.write('person3 name2 :' + person3.name + '<br />');
+        //configuratable设置为false，删除不起作用，严格模式报错，而且不可再更改为true
+        // delete person3.name;
+        person3.name = 'elipse';
+        document.write('person3 name3: ' + person3.name + '<br />');
+        /*2)访问器属性：包含一对getter和setter函数（非必须），getter读取访问器属性，setter设置访问器属性。
+         * 具有四个特性：configuration、enumeratable、get、set
+         * 不能直接定义，使用Object.defineProperty()定义。
+         * 不定义set，属性不可写，不定义get，属性不可
+         */
+        let book = {
+            _year: 2004,
+            edition: 1
+        };
+        Object.defineProperty(book, 'year',{
+            get: function() {
+                return this._year;
+            },
+            set: function(newValue) {
+                if(newValue > 2004) {
+                    this._year = newValue;
+                    this.edition += newValue - 2004;
+                }
+            }
+        });
+        book.year = 2005;
+        document.write('book edition: ' + book.edition + '<br />');
+        //Object.getOwnPropertyDescriptor()获取属性的描述符
+        let descriptor = Object.getOwnPropertyDescriptor(book,'_year');
+        document.write('descriptor value: ' + descriptor.value + '<br/>');
+        document.write('descriptor configurable: ' + descriptor.configurable + '<br/>');
+        let yearDescriptor = Object.getOwnPropertyDescriptor(book, 'year');
+        document.write('descriptro ger: ' + yearDescriptor.get + '<br/>');
+
+
+
+        //第二部分创建对象模式
+        document.write('<h3>第二部分创建对象的模式：</h3>');
+        document.write('<h4>1.工厂模式</h4>');
+        /*1.工厂模式:用来创建多个相似的对象，减少重复代码，没有解决对象识别问题
+         * 构造函数是Object（）,使用new调用得到的实例对象构造函数依然是Object
+         */
+         
+        function createPerson(name, age, job) {
+            let o = new Object();
+            o.name = name;
+            o.age = age;
+            o.job = job;
+            o.sayName = function() {
+                document.write('name: ' + this.name + '<br/>');
+            };
+            return o;
+        }
+
+        let fatPerson1 = createPerson('Jone', 23, 'Doctor');
+        fatPerson1.sayName();
+        document.write((fatPerson1.constructor == Object) +'<br/>');
+        let fatPerson2 = createPerson('Jsdw', 34, 'jslf');
+        fatPerson2.sayName();
+        fatPerson1.constructor;
+        
+        /*2.构造函数模式，以这种方式定义的构造函数是定义在Global对象（在浏览器中是window对象）中的
+         *用来创建特定类型的对象，约定函数名首字母大写
+         *像Object和Array这样的原生构造函数，在运行时会自动出现在执行环境中，可以创建自定义构造函数，定义属性和方法
+         *调用构造函数经历的步骤：
+         *1.创建一个新对象
+         *2.将构造函数的作用域赋给新对象（因此this指向这个新对象）
+         *3.执行构造函数中的代码（为这个新对象添加属性）
+         *4.返回新对象
+         */
+         document.write('<h4>2.构造函数模式</h4>');
+        function Person(name, age, job) {
+            this.name = name;
+            this.age = age;
+            this.job = job;
+            this.sayName = function() {
+                document.write('my name is ' + this.name + '<br/>');
+            }
+        }
+
+        let conPerson1 = new Person('Jin', 30, 'Fontend developer');
+        conPerson1.sayName();
+        //用此方法构造的对象的构造函数是Person（）
+        document.write((conPerson1.constructor == Person) + '<br/>');
+        //对象的constructor属相最初是用来标识对象类型的。检测对象类型，用instanceof更可靠一些
+        //在上面的例子中创建的对象既是Object的实例也是Person的实例,因为所有对象均继承自Object
+        document.write((conPerson1 instanceof Person) + '<br/>');
+        document.write((conPerson1 instanceof Object) + '<br/>');
+        //注：构造函数与其他函数的区别在于调用他们的方式不同。构造函数也是函数，不存在定义构造函数的特殊语法。
+        //任何函数只要通过new操作符来调用，那它就可以作为构造函数；
+        //任何函数如果不通过new操作符来调用，那它跟普通函数也一样
+        document.write('构造函数也是一个函数实例：' + (Person instanceof Function));
+        //Person当做普通函数来调用,属性和方法都被添加到window对象，因为Person是定义在window上的
+        Person('Greg', 27, 'Doctor');
+        window.sayName();
+
+        //在另一个对象的作用域中调用
+        let o = new Object();
+        Person.call(o, 'sjfdks', 26, 'djskls');//this被绑定到o上，o就拥有了所有属性和方法
+        o.sayName();
+        document.write(o.age + '<br/>');
+        
+        //构造函数的缺点：每个方法都要在每个实例上重新创建一遍，不通话实例的方法不是同一个Function实例。
+        //可以将函数定义到全局作用域上，但是这样又污染全局作用域也失去了对象的封闭性，使用原型模式解决这个问题
+        function PersonWithOUtFun(name, age, job) {
+            this.name = name;
+            this.age = age;
+            this.job = job;
+            this.sayName = sayName;
+        }
+
+        function sayName() {
+            document.write('myname is ' + (this.name) + '<br/>');
+        }
+        let person4 = new PersonWithOUtFun('woeru', 20, 'wipipro');
+        person4.sayName();
+
+        /* 3.原型模式
+         * 每个函数都有一个prototype(原型)属性，这个属性是一个指针，指向一个对象
+         * 这个对象的用途是包含可以由特定类型的所有实例共享的属性和方法。
+         * prototype是通过调用构造函数而创建的那个对象实例的原型对象。
+         * 原型对象让所有的对象实例共享它所包含的属性和方法。
+         */
+         document.write('<h4>3.原型模式</h4>');
+        document.write((typeof Person.prototype) + '<br/>');
+
+        function PersonWithProto() {}
+        PersonWithProto.prototype.name = 'jsljf';
+        PersonWithProto.prototype.age = 27;
+        PersonWithProto.prototype.job = 'djls';
+        PersonWithProto.prototype.sayName = function(){
+            document.write('my name is ' + this.name + '<br/>');
+        }
+
+        let person5 = new PersonWithProto();
+        person5.sayName();
+        //无论什么时候只要创建了一个函数，就会根据一组特定的规则为该函数创建一个prototype属性，这个属性指向函数的原型对象。
+        //默认情况下，所有的原型对象都会自动获取一个constructor属性，这个属性包含一个指向prototype属性的函数指针
+        document.write(PersonWithProto.prototype.constructor + '<br/>');
+        //创建了自定义的构造函数之后，其原型对象默认只会取得constructor属性
+        //至于其他方法，则都是从Object继承而来的。
+        //当调用构造函数创建一个新实例后，该实例的内部将包含一个指针，指向构造函数的原型对象
+        //使用isPropertyOf()判断一个实例的对象原型，也可以用—__proto__内部属性，也可以使用getPrototypeOf()方法
+        document.write("person5's is PersonWithProto :" + (PersonWithProto.prototype.isPrototypeOf(person5)) + "<br/>");
+        document.write("person5's is PersonWithProto :" + (PersonWithProto.prototype == person5.__proto__) + "<br/>");
+        document.write("person5's is PersonWithProto :" + (PersonWithProto.prototype == Object.getPrototypeOf(person5)) + "<br/>");
+        
+        //当代码读取某个对象的某个属性时，都会执行一次搜索，目标是具体给定名字的属性。
+        //搜索先从对象实例本身开始，如果找到，就返回该属性的值。如果没有，就继续搜索指向的原型对象，找到就返回。
+        //在对象实例中添加和原型对象同名的属性，会屏蔽原型中的那个属性，通过delete又可以访问原型对象中的属性
+
+        //使用hasOwnProperty()方法可以检测一个属性是存在于实例中，还是存在于原型中。
+        person5.name = 'jsljf';
+        document.write('对象实例自有属性' + person5.hasOwnProperty("name") + '<br/>');
+        document.write(Object.getOwnPropertyDescriptor(person5,"name").value + '<br/>');
+
+        //in操作符，当可以通过对象能够访问给定属性时返回true，不管是在对象实例中或原型中
+        document.write('name 属性在对象实例 person5 或者原型中：' + ('name' in person5) + '<br/>');
+        //属性在原型中，不是在实例中
+        // !object.hasOwnProperty(name) && (name in object)
+        //在使用for-in循环中，返回的是所有能够通过对象访问的、可枚举的属性，
+        //其中既包括存在于实例中的属性，也包括存在于原型中的属性(开发人员定义的属性都是可枚举的)
+        person5.toString = function() {
+            return 'jsjfdl';
+        }
+        for(let prop in person5) {
+            console.log(prop);
+            // debugger
+        }
+        //Object.keys()对象上所有可枚举的实例属性,返回可枚举属性的字符串数组
+        let keys = Object.keys(person5);
+        //获得所有的实例属性，无论是否可枚举，使用Object.getOwnPropertyNames()
+        let keys2 = Object.getOwnPropertyNames(person5);
+
+        //重写原型,原型对象的constructor指向Object()
+        function PersonOverWritePro() {}
+        PersonOverWritePro.prototype = {
+            name: 'jslkjfd',
+            age: 30,
+            job: 'djks',
+            sayName: function() {
+                document.write('my name is ' + this.name + '<br/>');
+            }
+        }
+        let person6 = new PersonOverWritePro();
+        document.write("person6's constructor is  " + person6.constructor + "<br/>");
+        //解决方法，使用defineProperty
+        Object.defineProperty(PersonOverWritePro.prototype, 'constructor', {
+            enumerable: false,
+            value: PersonOverWritePro,
+        });
+        document.write("person6's constructor is  " + person6.constructor + "<br/>");
+        
+        //创建实例对象后再完全重写原型，实例对象的原型以前是之前的原型，需要对实例的__proto__设置
+        function PersonOverWriteProAfterInstant(){}
+        let person7 = new PersonOverWriteProAfterInstant();
+        PersonOverWriteProAfterInstant.prototype = {
+            // constructor: PersonOverWriteProAfterInstant,
+            name: 'jdkl',
+            sayName: function(){
+                document.write('overwrite after object Instance');
+            }
+        }
+        person7.__proto__=PersonOverWriteProAfterInstant.prototype;
+        person7.sayName();
+        //原生引用类型(Object、Array、String)都是在其构造函数的原型上定义的方法
+        //原型模式缺点是所有属性和方法都共享。
+        //4.可以结合使用函数模式和原型模式，构造函数定义实例属性，原型定义共享属性和方法
+        document.write('<h4>4.函数模式和原型模式结合: </h4>');
+        function PersonConAndPro(name, age, job){
+            this.name = name;
+            this.age = age;
+            this.job = job;
+        }
+        PersonConAndPro.prototype = {
+            constructor: PersonConAndPro,
+            sayName: function(){
+                document.write('construtor and prototype pattern,name :' + this.name + '<br/>');
+            }
+        }
+        let person8 = new PersonConAndPro('dksjk');
+        person8.sayName();
+        document.write('<h4>5.动态原型模式</h4>');
+        //5.也可以使用动态原型模式
+        function PersonDynamicObj(name, age, job){
+            //property
+            this.name = name;
+            this.age = age;
+            this.job = job;
+            //method
+            if(typeof this.sayName != "function"){
+                PersonDynamicObj.prototype.sayName = function() {
+                    document.write('my name is: ' + this.name + '<br/>');
+                };
+            }
+        }
+        let person10 = new PersonDynamicObj('person10');
+        person10.sayName();
+
+        //6.寄生构造函数模式，不想改变原有原型时用来创建构造函数；
+        document.write('<h4>6.寄生构造函数模式</h4>');
+        function SpecialArray(){
+            let specialArray = new Array();
+            specialArray.push.apply(specialArray, arguments);
+            specialArray.toPipedString = function() {
+                return this.join("|");
+            };
+            return specialArray;
+        }
+        let colors = new SpecialArray('fdk', 'fjdk', 'woru');
+        document.write('I am a special array: '+ colors.toPipedString() + '<br/>');
+        //7.稳妥构造函数模式，隐藏属性，适合安全执行环境
+        document.write('<h4>7.稳妥构造函数模式</h4>');
+        function PersonSafe(name, age, job) {
+            let o = new Object();
+            o.sayName = function(){
+                document.write('只有我可以获取属性name：' + name + '<br/>');
+            }
+            return o;
+        }
+        let person9 = PersonSafe('fjdlk');
+        person9.sayName();
+
+
+        //第三部分 继承
+        document.write('<h3>第三部分 继承</h3>');
+        document.write('<h4>1.原型链</h4>');
+        /*1.原型链，让一个应用类型继承另一个应用类型的属性和方法
+         *问题：1.属性共享导致引用类型的属性改动后，所有实例的这个属性都会更改
+         *2.在创建子类型实例时不能向超类型中传参数
+         */
+        function SuperType(){
+            this.property = true;
+        }
+        SuperType.prototype.getSuperValue = function() {
+            return this.property;
+        }
+        function SubType(){
+            this.subproperty = false;
+        }
+        SubType.prototype = new SuperType();
+        SubType.prototype.getSubValue = function() {
+            return this.subproperty;
+        }
+        let instance = new SubType();
+        
+        document.write('I am property from parents: ' + instance.getSuperValue() + '<br/>');
+        //使用instanceOf和isPrototypeOf测试原型和实例之间关系
+        document.write('I am a instance of Object: ' + (instance instanceof Object) +'<br/>');
+        document.write('I am a instance of SuperType: ' + (instance instanceof SuperType) +'<br/>');
+        document.write('I am a instance of SubType: ' + (instance instanceof SubType) +'<br/>');
+
+        document.write('SubType is the prototype of me: ' + (SubType.prototype.isPrototypeOf(instance)) + '<br/>');
+
+        /*2.借用构造函数
+         * 在子类型构造函数内部调用超类型构造函数
+         *问题是：不能复用超类中定义的方法，每个实例会实例化方法。
+        */
+        document.write('<h4>2.借用构造函数</h4>');
+        function Animal(){
+            this.colors = ['dfd','fddf','weor'];
+        }
+        function Cat(){
+            Animal.call(this);
+        }
+        let instance1 = new Cat();
+        instance1.colors.push('fjsk');
+        document.write('instance1 colors is: ' + instance1.colors +'<br/>');
+        
+        let instance2 = new Cat();
+        document.write('instance2 colors is: ' +instance2.colors + '<br/>');
+
+        /*3.组合继承，组合使用原型链继承和借用构造方法继承
+         * 使用原型属性和方法的继承，通过原型链实现原型属性和方法的继承，借用函数构造实现对实例属性的继承
+         * 
+        */
+        document.write('<h4>3.组合继承</h4>');
+        function Parents(name){
+            
+            this.name = name;
+            this.colors = ['red', 'blue', 'green'];
+        }
+       
+        Parents.prototype.sayName = function() {
+            document.write('this function extends from Parents,my name is: ' +this.name +'<br/>');
+        }
+        function Children(name, age) {
+            //继承属性（借用构造方法），每个实例会进行实例化，不共享
+            Parents.call(this,name);
+            this.age = age;
+        }
+        //继承方法（原型链实现），实例共享方法
+        Children.prototype = new Parents();
+        Children.prototype.constructor = Children;
+        Children.prototype.sayAge = function() {
+            document.write('this is child function,my age is:' + this.age + '<br/>');
+        }
+        let childIns1 = new Children('childIns1', 29);
+        childIns1.colors.push('sjdk');
+        document.write('childIns1 has property colors ,it is: ' + childIns1.colors + '<br/>');
+        childIns1.sayName();
+        childIns1.sayAge();
+
+        let childIns2 = new Children('childIns2',20);
+        document.write('childIns1 has property colors ,it is: ' + childIns2.colors + '<br/>');
+        childIns2.sayName();
+        childIns2.sayAge();
+        
+        document.write('childIns1 has the same function sayAge as childIns2: ' + (childIns1.sayAge == childIns2.sayAge) + '<br/>');
+        document.write('childIns1 has the same function sayName as childIns2: ' + (childIns1.sayName == childIns2.sayName) + '<br/>');
+        /*4.原型式继承
+         * 借助原型基于已有的对象创建新对象
+         *
+        */
+        document.write('<h4>4.原型式继承</h4>');
+        function object(o){
+            function F(){}
+            //浅拷贝
+            F.prototype = o;
+            return new F();
+        }
+
+        let parentObject = {
+            name: 'jdksjd',
+            friends: ['fdk', 'wurie', 'vjlx']
+        };
+        let oneInstan = object(parentObject);
+        oneInstan.name = 'vaer';
+        oneInstan.friends.push('ros');
+
+        let anotherInstan = object(parentObject);
+        anotherInstan.name = 'o[32';
+        anotherInstan.friends.push('bwe');
+        document.write('this is shallow copy: ' + (oneInstan.friends == anotherInstan.friends) +'<br/>');
+        //es5规范化了原型继承，使用Object.create()，接受两个参数：
+        //一个用作新对象原型的对象，一个为新对象定义额外属性的对象（可选）
+        //第二个参数格式与Object.
+        //引用类型的属性共享
+        let yetAnthorInstan = Object.create(parentObject, {
+            name: {
+                value: 'djsl'
+            }
+        });
+        document.write('new name is :' +yetAnthorInstan.name + '<br/>');
+        /*5.寄生组合式继承
+         * 
+        */
+        function inheritPrototype(subType, superType){
+            let prototype = Object.create(superType.prototype);
+            prototype.constructor = subType;
+            subType.prototype = prototype;
+        }
+        function SuperType1(name) {
+            this.name = name;
+            this.colors = ['fdkjfk', '3j2f', 'kpfidp'];
+        }
+        SuperType1.prototype.sayName = function (){
+            alert (this.name);
+        }
+        function SubType1(name, age) {
+            SuperType1.call(this, name);
+            this.age = age;
+        }
+        inheritPrototype(SubType1, SuperType1);
+        SubType1.prototype.sayAge = function() {
+            alert(this.age);
+        }
+        let instan = new SubType1('jsljfdkl');
+        
+        debugger
+
+
+        // debugger;
+
+
+
+    </script>
+</body>
+</html>
